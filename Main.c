@@ -11,26 +11,26 @@
 
 unsigned char map [1024];
 
-size_t inBounds(size_t* tile)
+BOOLEAN inBounds(int16_t* tile)
 {
 	return (*tile % 32!=0 && *tile % 33 !=0);
 }
 
-size_t getNextValidMove(size_t currentPos)
+int16_t getNextValidMove(int16_t currentPos)
 {
-	size_t options = 0;
+	int8_t options = 1;
 	
-	size_t up = currentPos - mapWidth;
-	size_t down = currentPos + mapWidth;
-	size_t left = currentPos - 1;
-	size_t right = currentPos + 1;
-	options = (up > 0 && inBounds(&up))? options++ : options;
-	options = (down < mapHeight && inBounds(&down))? options++:  options;
-	options = (left > 0 && inBounds(&left))? options++ : options;
-	options = (right < mapWidth && inBounds(&right))? options++ : options;
-
-	size_t selection = rand(); //not working
-	selection = (selection % (options - 1 + 1)) + 1;
+	int16_t up = currentPos - mapWidth;
+	int16_t down = currentPos + mapWidth;
+	int8_t left = currentPos - 1;
+	int8_t right = currentPos + 1;
+	options = (up > 0 && inBounds(&up))? options+1 : options;
+	options = (down < mapHeight && inBounds(&down))? options+1:  options;
+	options = (left > 0 && inBounds(&left))? options+1 : options;
+	options = (right < mapWidth && inBounds(&right))? options+1 : options;
+	
+	
+	int8_t selection = (rand() % (options + 1 - 1)) + 1;
 	switch (selection)
 	{
 	case 1:
@@ -49,30 +49,29 @@ size_t getNextValidMove(size_t currentPos)
 
 void generateNewMap()
 {
-	size_t start = rand();
-	size_t end = rand();
-	size_t visited[sizeof(map)] = {0};
-	
+	int16_t start = rand();
+	int16_t end = rand();
 	
 	start = (start % (324 - 34 + 1)) + 34;
 	end = (end % (991- 927 +  1)) + 927;
 	start = start % 32 == 0 || start % 33 ==0 ? start + 2 : start;
 	end = end % 32 == 0  || end % 33 == 0 ? end -2 : end;
-	size_t pos = start;
+	int16_t pos = start;
 
-	for(size_t i=0;i< sizeof(testmap)/sizeof(testmap[0]) ;i++)
+	for(int16_t i=0;i< sizeof(testmap)/sizeof(testmap[0]) ;i++)
 	{
 		map[i] = BackgroundTiles[1];
 	}
 	map[start] = BackgroundTiles[0];
 	map[end] = BackgroundTiles[0];
-	
-	//visited[start] = 1;
-	size_t turns = 0;
-	while(turns<10)
+
+	int8_t turns = 0;
+	while(turns<100)
 	{
+		map[pos] = BackgroundTiles[0];
 		pos += getNextValidMove(pos);
-		map[pos]=BackgroundTiles[0];
+		
+		//try a splash fill? then just go over the borders
 		turns++;
 	}
 	
