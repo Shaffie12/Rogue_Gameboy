@@ -5,23 +5,32 @@
 #include "BackgroundTiles.c"
 #include "testmap.c"
 #include "testmap2.c"
+#include "testmap3.c"
 #include "rand.h"
 
 #define mapWidth 32
 #define mapHeight 32
 #define testmapBank 0
+#define no_maps 3
 
 unsigned char map [1024];
+unsigned char* maps[3] = {testmap,testmap2,testmap3};
 
 
 void generateNewMap()
 {
-
-	memcpy(&map[0],&testmap[0],sizeof(map)/2); //data copies L to R use rows from different maps instead
-	memcpy(&map[sizeof(map)/2],&testmap2[105],(sizeof(map)/2));
-	//we can check the row above for a walkable tile.  then on the next line, we can verify that the row we will insert, has at least
-	//1 tile in common
+	int16_t elements = sizeof(testmap)/sizeof(testmap[0]);
+	int16_t idx = 0;
+	//memcpy(&map[0],&testmap[0],sizeof(map)/2);
+	//memcpy(&map[elements/2],&testmap2[(elements/2)+1],32);
+	for(int8_t i=0; i< 32; i++)
+	{
+		int8_t r = (rand()% (no_maps - 1 + 1)) + 1;
+		memcpy(&map[idx],&maps[r][idx],32);
+		idx+=32;
+	}
 	
+
 }
 
 int main()
