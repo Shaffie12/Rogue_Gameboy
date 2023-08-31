@@ -21,14 +21,16 @@ void generateNewMap()
 {
 	int16_t elements = sizeof(testmap)/sizeof(testmap[0]);
 	int16_t idx = 0;
-	//memcpy(&map[0],&testmap[0],sizeof(map)/2);
-	//memcpy(&map[elements/2],&testmap2[(elements/2)+1],32);
-	for(int8_t i=0; i< 32; i++)
+	//memcpy(&map[0],&maps[1][0],256);
+	//memcpy(&map[257],&maps[0][640],320);
+	for(int8_t i=0; i< 16; i++)
 	{
-		int8_t r = (rand()% (no_maps - 1 + 1)) + 1;
-		memcpy(&map[idx],&maps[r][idx],32);
-		idx+=32;
-	}
+		int8_t r = (rand()% (2 - 0 + 1)) + 0;
+		memcpy(&map[idx],&maps[r][idx],64);
+		idx+=64;
+	} 
+
+	//try randomising size of the chunks to load from mem. ie size of the loop
 	
 
 }
@@ -42,7 +44,6 @@ int main()
 	initrand(DIV_REG);
 
 	generateNewMap();
-
 	set_bkg_tiles(0,0,testmapWidth,testmapHeight,map);
 
 	while(1)
