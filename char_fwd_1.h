@@ -1,6 +1,6 @@
 /*
 
- TILEDATA.H
+ CHAR_FWD_1.H
 
  Include File.
 
@@ -9,8 +9,8 @@
   Format               : Gameboy 4 color.
   Compression          : None.
   Counter              : None.
-  Tile size            : 8 x 8
-  Tiles                : 0 to 13
+  Tile size            : 16 x 16
+  Tiles                : 0 to 0
 
   Palette colors       : None.
   SGB Palette          : None.
@@ -24,8 +24,11 @@
 
 
 /* Bank of tiles. */
-
+#define charSprites_width 16
+#define charSprites_height 16
+#define char_NUM_TILES 4
+#define characterBank 0
 /* Start of tile array. */
-extern unsigned char TileData[];
+extern unsigned char character[];
 
-/* End of TILEDATA.H */
+/* End of CHAR_FWD_1.H */
