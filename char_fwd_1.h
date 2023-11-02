@@ -26,7 +26,7 @@
 /* Bank of tiles. */
 #define charSprites_width 16
 #define charSprites_height 16
-#define char_NUM_ILES 4
+#define char_NUM_TILES 4
 #define characterBank 0
 /* Start of tile array. */
 extern unsigned char character[];
