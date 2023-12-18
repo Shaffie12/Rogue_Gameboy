@@ -21,7 +21,7 @@ unsigned char* maps[3] = {testmap,testmap2,testmap3};
 /*sprite 0 and 1 are the character sprites drawn in 8x16 mode*/
 
 /*movement and input*/
-uint8_t playerX=0,playerY=0;
+uint16_t playerX=8,playerY=16;
 uint16_t joypadCurrent=0,joypadPrev=0;
 
 void generateNewMap()
@@ -60,20 +60,22 @@ int main()
 	set_bkg_tiles(0,0,testmapWidth,testmapHeight,map);
 	set_sprite_tile(0,0);
 	set_sprite_tile(1,2);
-	move_sprite(0,playerX + charSprites_width/2, playerY + charSprites_height);
-	move_sprite(1,playerX + charSprites_width/2 + 8,playerY + charSprites_height);
-	uint8_t moved;
-	uint8_t moveFrameDelay = 30;
-	uint8_t frames = moveFrameDelay;
-
 	
+	uint8_t moved = 0;
+	const uint8_t MOVE_FRAME_DELAY = 5;
+	uint8_t frames = MOVE_FRAME_DELAY;
+	const uint8_t SCROLL_AMT = 16;
+	uint32_t viewportOffset = 0;
 
 	while(1)
 	{
+		/*only allow movement once every n frames*/
 		frames++;
-		if(frames >= moveFrameDelay)
+		if(frames >= MOVE_FRAME_DELAY)
+		{
 			moved = 0;
-
+			frames = 0;
+		}
 		joypadPrev = joypadCurrent;
 		joypadCurrent = joypad();
 
@@ -106,11 +108,22 @@ int main()
 				
 		}
 
-		
+		/* Scroll the background whenever we hit an edge */
+		//TO DO: replace the variables with value getters or some cleaner way to get copies of these integers
+		uint16_t scrnX = SCREENWIDTH; 
+		uint16_t plX = playerX;
+		if(plX + charSprites_width >= scrnX)
+		{
+			scroll_bkg(SCROLL_AMT,0);
+			playerX -= SCROLL_AMT;
+			
+		}
 
 		
-		move_sprite(0,playerX + charSprites_width/2, playerY + charSprites_height);
-		move_sprite(1,playerX + charSprites_width/2 + 8,playerY + charSprites_height);
+		uint16_t playerXa = playerX + charSprites_width/2,
+				 playerYa = playerY;
+		move_sprite(0,playerX, playerY);
+		move_sprite(1,playerXa,playerYa);
 		
 		
 		wait_vbl_done();
