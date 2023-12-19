@@ -18,11 +18,14 @@
 unsigned char map [1024];
 unsigned char* maps[3] = {testmap,testmap2,testmap3};
 
+const uint8_t MOVE_FRAME_DELAY = 5;
+const uint8_t SCROLL_AMT = 16;
+
 /*sprite 0 and 1 are the character sprites drawn in 8x16 mode*/
 
 /*movement and input*/
 uint16_t playerX=8,playerY=16;
-uint16_t joypadCurrent=0,joypadPrev=0;
+uint8_t joypadCurrent=0,joypadPrev=0;
 
 void generateNewMap()
 {
@@ -44,6 +47,18 @@ void generateNewMap()
 
 }
 
+uint16_t getPlayerX()
+{
+	uint16_t plX = playerX;
+	return plX;
+}
+
+uint16_t getPlayerY()
+{
+	uint16_t plY = playerY;
+	return plY;
+}
+
 int main()
 {
 
@@ -60,16 +75,19 @@ int main()
 	set_bkg_tiles(0,0,testmapWidth,testmapHeight,map);
 	set_sprite_tile(0,0);
 	set_sprite_tile(1,2);
-	
+
+	uint16_t viewportOffsetX = 0;
+	uint16_t viewportOffsetY = 0;
 	uint8_t moved = 0;
-	const uint8_t MOVE_FRAME_DELAY = 5;
 	uint8_t frames = MOVE_FRAME_DELAY;
-	const uint8_t SCROLL_AMT = 16;
-	uint32_t viewportOffset = 0;
+	
 
 	while(1)
 	{
-		/*only allow movement once every n frames*/
+		/*
+		*only allow movement once every n frames
+		*do not allow movement to invoke the screen wrap
+		*/
 		frames++;
 		if(frames >= MOVE_FRAME_DELAY)
 		{
@@ -83,47 +101,83 @@ int main()
 		{
 			if(joypadCurrent & J_LEFT)
 			{
-				playerX -=8;
-				moved =1;
-				frames = 0;
+				if( getPlayerX() + viewportOffsetX > 8)
+				{
+					playerX -=8;
+					moved =1;
+					frames = 0;	
+				}			
 			} 
 			if(joypadCurrent & J_RIGHT)
 			{
-				playerX +=8;
-				moved = 1;
-				frames = 0;
+				if(getPlayerX() + viewportOffsetX < mapWidth * 8)
+				{
+					playerX +=8;
+					moved = 1;
+					frames = 0;
+				}	
 			} 
 			if(joypadCurrent & J_UP)
 			{
-				playerY -=8;
-				moved = 1;
-				frames = 0;
+				if(getPlayerY() + viewportOffsetY > 16)
+				{
+					playerY -=8;
+					moved = 1;
+					frames = 0;
+				}
 			}
 			if(joypadCurrent & J_DOWN)
 			{
-				playerY +=8;
-				moved = 1;
-				frames = 0;
+				if(getPlayerY() + viewportOffsetY < mapHeight * 8)
+				{
+					playerY +=8;
+					moved = 1;
+					frames = 0;
+				}	
 			} 
 				
 		}
 
-		/* Scroll the background whenever we hit an edge */
-		//TO DO: replace the variables with value getters or some cleaner way to get copies of these integers
-		uint16_t scrnX = SCREENWIDTH; 
-		uint16_t plX = playerX;
-		if(plX + charSprites_width >= scrnX)
+		/* 
+		*scroll the background whenever we hit an edge
+		*except when we reach the edge of the map
+		*/
+		if(getPlayerX() >= SCREENWIDTH)
 		{
-			scroll_bkg(SCROLL_AMT,0);
 			playerX -= SCROLL_AMT;
+			delay(100);
+			scroll_bkg(SCROLL_AMT,0);
 			
+			viewportOffsetX +=SCROLL_AMT;
 		}
+		else if(getPlayerX() + viewportOffsetX < (8+viewportOffsetX))
+		{
+			playerX += SCROLL_AMT;
+			delay(100);
+			scroll_bkg(-1 * SCROLL_AMT, 0);
 
+			viewportOffsetX -= SCROLL_AMT;
+		}
+		else if(getPlayerY() >= SCREENHEIGHT)
+		{
+			playerY-= SCROLL_AMT;
+			delay(100);
+			scroll_bkg(0,SCROLL_AMT);
+
+			viewportOffsetY += SCROLL_AMT;
+		}
+		else if(getPlayerY() + viewportOffsetY < (16+viewportOffsetY))
+		{
+			playerY +=SCROLL_AMT;
+			delay(100);
+			scroll_bkg(0, -1 * SCROLL_AMT);
+			viewportOffsetY -= SCROLL_AMT;
+		}
 		
-		uint16_t playerXa = playerX + charSprites_width/2,
-				 playerYa = playerY;
+
+		uint16_t playerXa = getPlayerX()+ charSprites_width/2;
 		move_sprite(0,playerX, playerY);
-		move_sprite(1,playerXa,playerYa);
+		move_sprite(1,playerXa,playerY);
 		
 		
 		wait_vbl_done();
