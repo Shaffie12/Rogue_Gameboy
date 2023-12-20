@@ -17,7 +17,7 @@
 unsigned char map [1024];
 unsigned char* maps[3] = {testmap,testmap2,testmap3};
 
-const uint8_t MOVE_FRAME_DELAY = 50;
+const uint8_t MOVE_FRAME_DELAY = 5;
 const uint8_t ANIM_DELAY = 30;
 const uint8_t SCROLL_AMT = 16;
 
@@ -70,40 +70,7 @@ uint16_t getPlayerY()
 *scroll the background whenever we hit an edge
 *except when we reach the edge of the map
 */
-void check_bkg_scroll(uint16_t viewportOffsetX, uint16_t viewportOffsetY)
-{
-		if(getPlayerX() > SCREENWIDTH)
-		{
-			playerX -= SCROLL_AMT;
-			delay(100);
-			scroll_bkg(SCROLL_AMT,0);
-			
-			viewportOffsetX +=SCROLL_AMT;
-		}
-		else if(getPlayerX() + viewportOffsetX < (8+viewportOffsetX))
-		{
-			playerX += SCROLL_AMT;
-			delay(100);
-			scroll_bkg(-1 * SCROLL_AMT, 0);
 
-			viewportOffsetX -= SCROLL_AMT;
-		}
-		else if(getPlayerY() > SCREENHEIGHT)
-		{
-			playerY-= SCROLL_AMT;
-			delay(100);
-			scroll_bkg(0,SCROLL_AMT);
-
-			viewportOffsetY += SCROLL_AMT;
-		}
-		else if(getPlayerY() + viewportOffsetY < (16+viewportOffsetY))
-		{
-			playerY +=SCROLL_AMT;
-			delay(100);
-			scroll_bkg(0, -1 * SCROLL_AMT);
-			viewportOffsetY -= SCROLL_AMT;
-		}
-}
 
 void update_animations()
 {
@@ -195,7 +162,39 @@ int main()
 				
 		}
 
-		check_bkg_scroll(viewportOffsetX, viewportOffsetY);
+		if(getPlayerX() > SCREENWIDTH)
+		{
+			playerX -= SCROLL_AMT;
+			delay(100);
+			scroll_bkg(SCROLL_AMT,0);
+			
+			viewportOffsetX +=SCROLL_AMT;
+		}
+		else if(getPlayerX() + viewportOffsetX < (8+viewportOffsetX))
+		{
+			playerX += SCROLL_AMT;
+			delay(100);
+			scroll_bkg(-1 * SCROLL_AMT, 0);
+
+			viewportOffsetX -= SCROLL_AMT;
+		}
+		else if(getPlayerY() > SCREENHEIGHT)
+		{
+			playerY-= SCROLL_AMT;
+			delay(100);
+			scroll_bkg(0,SCROLL_AMT);
+
+			viewportOffsetY += SCROLL_AMT;
+		}
+		else if(getPlayerY() + viewportOffsetY < (16+viewportOffsetY))
+		{
+			playerY +=SCROLL_AMT;
+			delay(100);
+			scroll_bkg(0, -1 * SCROLL_AMT);
+			viewportOffsetY -= SCROLL_AMT;
+		}
+
+	
 
 		move_sprite(0,playerX, playerY);
 		
