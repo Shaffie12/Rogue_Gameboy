@@ -9,8 +9,10 @@
 #include "char_1_right.c"
 #include "rand.h"
 
-#define mapWidth 32
-#define mapHeight 32
+#define tile_size 8
+#define mapWidthTiles 32
+#define mapHeightTiles 32
+#define mapWHPixels 256
 #define testmapBank 0
 #define no_maps 3
 
@@ -22,7 +24,7 @@ const uint8_t ANIM_DELAY = 30;
 const uint8_t SCROLL_AMT = 16;
 
 /* movement and input */
-uint16_t playerX=8,playerY=16;
+uint16_t playerX=80,playerY=88;
 uint8_t joypadCurrent=0,joypadPrev=0;
 uint8_t moved = 0;
 
@@ -50,8 +52,6 @@ void generateNewMap()
 	} 
 
 	//try randomising size of the chunks to load from mem. ie size of the loop
-	
-
 }
 
 uint16_t getPlayerX()
@@ -66,11 +66,48 @@ uint16_t getPlayerY()
 	return plY;
 }
 
-/* 
-*scroll the background whenever we hit an edge
-*except when we reach the edge of the map
-*/
+void check_bkg_scroll()
+{
+	if(getPlayerX() > SCREENWIDTH)
+	{
+		playerX -= SCROLL_AMT;
+		delay(100);
+		scroll_bkg(SCROLL_AMT,0);
+		
+		viewportOffsetX +=SCROLL_AMT;
+	}
+	else if(getPlayerX() + viewportOffsetX < (8+viewportOffsetX))
+	{
+		playerX += SCROLL_AMT;
+		delay(100);
+		scroll_bkg(-1 * SCROLL_AMT, 0);
 
+		viewportOffsetX -= SCROLL_AMT;
+	}
+	else if(getPlayerY() > SCREENHEIGHT)
+	{
+		playerY-= SCROLL_AMT;
+		delay(100);
+		scroll_bkg(0,SCROLL_AMT);
+
+		viewportOffsetY += SCROLL_AMT;
+	}
+	else if(getPlayerY() + viewportOffsetY < (16+viewportOffsetY))
+	{
+		playerY +=SCROLL_AMT;
+		delay(100);
+		scroll_bkg(0, -1 * SCROLL_AMT);
+		viewportOffsetY -= SCROLL_AMT;
+	}
+}
+
+uint8_t isValidTile(uint16_t x, uint16_t y)
+{
+	uint8_t column = ((x-8) + viewportOffsetX)/tile_size;
+	uint8_t row = ((y-16) + viewportOffsetY)/tile_size;
+	uint16_t tilemapIdx = column +( row * mapWidthTiles);
+	return testmap2[tilemapIdx]< 1;
+}
 
 void update_animations()
 {
@@ -90,11 +127,8 @@ int main()
 	
 	set_bkg_data(0,tileData_NUM_TILES,TileData);
 	set_sprite_data(0,7,character);
-	initrand(DIV_REG);
-
-	generateNewMap();
-	set_bkg_tiles(0,0,testmapWidth,testmapHeight,map);
-	set_sprite_tile(0,0);
+	set_bkg_tiles(0,0,testmapWidth,testmapHeight,testmap2);
+	
 
 	while(1)
 	{
@@ -112,91 +146,75 @@ int main()
 		/*
 		*only allow movement once every n frames
 		*do not allow movement to invoke the screen wrap
+		*only allow movement on a legal tile
 		*/
 		if(!moved)
 		{
 			if(joypadCurrent & J_LEFT)
 			{
-				if( getPlayerX() + viewportOffsetX > 8)
+				if(isValidTile((getPlayerX()-8),getPlayerY() ) )
 				{
-					playerX -=8;
-					current_anim = 3;
-					anim_timer = 0;
-					moved = 1;
-					frames = 0;	
-				}			
+					if( getPlayerX() + viewportOffsetX > 8)
+					{
+						playerX -=8;
+						current_anim = 3;
+						anim_timer = 0;
+						moved = 1;
+						frames = 0;	
+					}
+				}
+							
 			} 
 			if(joypadCurrent & J_RIGHT)
 			{
-				if(getPlayerX() + viewportOffsetX < mapWidth * 8)
+				if(isValidTile((getPlayerX()+8), getPlayerY()))
 				{
-					playerX +=8;
-					current_anim = 2;
-					anim_timer = 0;
-					moved = 1;
-					frames = 0;
-				}	
+					if(getPlayerX() + viewportOffsetX < mapWidthTiles * 8)
+					{
+						playerX +=8;
+						current_anim = 2;
+						anim_timer = 0;
+						moved = 1;
+						frames = 0;
+					}	
+				}
+				
 			} 
 			if(joypadCurrent & J_UP)
 			{
-				if(getPlayerY() + viewportOffsetY > 16)
+				if(isValidTile(getPlayerX(),getPlayerY()-8))
 				{
-					playerY -=8;
-					current_anim = 6;
-					anim_timer = 0;
-					moved = 1;
-					frames = 0;
+					if(getPlayerY() + viewportOffsetY > 16)
+					{
+						playerY -=8;
+						current_anim = 6;
+						anim_timer = 0;
+						moved = 1;
+						frames = 0;
+					}
 				}
+				
 			}
 			if(joypadCurrent & J_DOWN)
 			{
-				if(getPlayerY() + viewportOffsetY < mapHeight * 8)
+				if(isValidTile(getPlayerX(),getPlayerY()+8))
 				{
-					playerY +=8;
-					current_anim = 4;
-					anim_timer = 0;
-					moved = 1;
-					frames = 0;
-				}	
+					if(getPlayerY() + viewportOffsetY < mapWHPixels)
+					{
+						playerY +=8;
+						current_anim = 4;
+						anim_timer = 0;
+						moved = 1;
+						frames = 0;
+					}	
+				}
+				
 			} 
 				
 		}
 
-		if(getPlayerX() > SCREENWIDTH)
-		{
-			playerX -= SCROLL_AMT;
-			delay(100);
-			scroll_bkg(SCROLL_AMT,0);
-			
-			viewportOffsetX +=SCROLL_AMT;
-		}
-		else if(getPlayerX() + viewportOffsetX < (8+viewportOffsetX))
-		{
-			playerX += SCROLL_AMT;
-			delay(100);
-			scroll_bkg(-1 * SCROLL_AMT, 0);
-
-			viewportOffsetX -= SCROLL_AMT;
-		}
-		else if(getPlayerY() > SCREENHEIGHT)
-		{
-			playerY-= SCROLL_AMT;
-			delay(100);
-			scroll_bkg(0,SCROLL_AMT);
-
-			viewportOffsetY += SCROLL_AMT;
-		}
-		else if(getPlayerY() + viewportOffsetY < (16+viewportOffsetY))
-		{
-			playerY +=SCROLL_AMT;
-			delay(100);
-			scroll_bkg(0, -1 * SCROLL_AMT);
-			viewportOffsetY -= SCROLL_AMT;
-		}
-
-	
-
-		move_sprite(0,playerX, playerY);
+		check_bkg_scroll();
+		move_sprite(0,getPlayerX(), getPlayerY());
 		
 		wait_vbl_done();
 	
