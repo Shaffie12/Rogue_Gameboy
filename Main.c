@@ -3,9 +3,7 @@
 #include "TileData.c"
 #include "string.h"
 #include "BackgroundTiles.c"
-#include "testmap.c"
-#include "testmap2.c"
-#include "testmap3.c"
+#include "defaultMap.c"
 #include "char_1_right.c"
 #include "rand.h"
 
@@ -15,9 +13,13 @@
 #define mapWHPixels 256
 #define testmapBank 0
 #define no_maps 3
+#define room_max_wh 20
+#define room_min_wh 7
 
+/* maps */
 unsigned char map [1024];
-unsigned char* maps[3] = {testmap,testmap2,testmap3};
+int16_t mapSeed;
+
 
 const uint8_t MOVE_FRAME_DELAY = 5;
 const uint8_t ANIM_DELAY = 30;
@@ -36,22 +38,49 @@ uint16_t anim_timer = 0;
 uint16_t viewportOffsetX = 0;
 uint16_t viewportOffsetY = 0;
 
-void generateNewMap()
+void generateRoomSegment(int8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNumber, int8_t numRows, int8_t numCols)
 {
-	int16_t elements = sizeof(testmap)/sizeof(testmap[0]);
-	int16_t idx = 0;
-	//memcpy(&map[0],&maps[1][0],256);
-	//memcpy(&map[257],&maps[0][640],320);
-	int chunk_size = (rand() %(5-3 + 1)+3);
-	int loops = (BackgroundTilesWidth*BackgroundTilesHeight)/chunk_size;
-	for(int8_t i=0; i< 32; i++)
+	if(numRows > 0 && numCols > 0) //area fill
 	{
-		
-		memcpy(&map[idx],&maps[2][idx],32);
-		idx+=32;
-	} 
+		while(numRows > 0)
+		{
+			int8_t j = numCols;
+			while(j > 0 )
+			{
+				map[mapInsertRow*32 + mapInsertCol + j] = BackgroundTiles[tileNumber];
+				j --;
+			}
+			numRows--;
+			mapInsertRow++;
+		}
+	}
 
-	//try randomising size of the chunks to load from mem. ie size of the loop
+	else if(numCols > 0)
+	{
+		while(numCols > 0)
+		{
+			map[mapInsertRow*32 + mapInsertCol] = BackgroundTiles[tileNumber];
+			mapInsertCol++;
+		}
+	}
+
+	else if(numRows > 0)
+	{
+		while(numRows > 0)
+		{
+			map[mapInsertRow*32 + mapInsertCol] = BackgroundTiles[tileNumber];
+			mapInsertRow++;
+		}
+	}
+	
+	
+}
+void generateNewMap()
+{	
+	memcpy(&map[0],&defaultMap[0],1024);
+	//generate the rooms
+	generateRoomSegment(1,1,0,10,10);
+
 }
 
 uint16_t getPlayerX()
@@ -106,7 +135,7 @@ uint8_t isValidTile(uint16_t x, uint16_t y)
 	uint8_t column = ((x-8) + viewportOffsetX)/tile_size;
 	uint8_t row = ((y-16) + viewportOffsetY)/tile_size;
 	uint16_t tilemapIdx = column +( row * mapWidthTiles);
-	return testmap2[tilemapIdx]< 1;
+	return map[tilemapIdx]< 1;
 }
 
 void update_animations()
@@ -122,14 +151,15 @@ int main()
 	SHOW_SPRITES;
 	SPRITES_8x8;
 	DISPLAY_ON; 
+	initrand(DIV_REG); //we should call this after some user input,like after start.
 
 	uint8_t frames = MOVE_FRAME_DELAY;
 	
 	set_bkg_data(0,tileData_NUM_TILES,TileData);
 	set_sprite_data(0,7,character);
-	set_bkg_tiles(0,0,testmapWidth,testmapHeight,testmap2);
+	generateNewMap();
+	set_bkg_tiles(0,0,defaultMapWidth,defaultMapHeight,map);
 	
-
 	while(1)
 	{
 		update_animations();
