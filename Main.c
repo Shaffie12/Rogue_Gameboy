@@ -77,10 +77,25 @@ void generateRoomSegment(int8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNu
 }
 void generateNewMap()
 {	
+	initrand(DIV_REG); //we should call this after some user input,like after start
 	memcpy(&map[0],&defaultMap[0],1024);
 	//generate the rooms
-	generateRoomSegment(1,1,0,10,10);
+	
+	uint8_t rOffset = 1;
+	uint8_t cOffset= 1;
+	for(uint8_t i = 0; i < 3; i++) //increase the size if fewer rooms
+	{
+		uint8_t nRows = ( rand() % (7 - 5 + 1)) + 5;
+		uint8_t nCols = ( rand() % (7 - 5 + 1)) + 5;
 
+		generateRoomSegment(rOffset, cOffset, 0, nRows, nCols);  
+
+		rOffset += (rand() % (rOffset - 23 +1)) + rOffset;
+		cOffset += (rand() % (cOffset - 23 +1)) + cOffset;
+
+		//rOffset +=( ( rand() % (5 - 0 + 1) ) + 0 ) % 23 ;
+		//cOffset +=( ( rand() % (5 - 0 + 1) ) + 0 ) % 23 ;
+	}
 }
 
 uint16_t getPlayerX()
@@ -151,7 +166,6 @@ int main()
 	SHOW_SPRITES;
 	SPRITES_8x8;
 	DISPLAY_ON; 
-	initrand(DIV_REG); //we should call this after some user input,like after start.
 
 	uint8_t frames = MOVE_FRAME_DELAY;
 	
