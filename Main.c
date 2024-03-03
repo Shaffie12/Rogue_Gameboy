@@ -40,41 +40,28 @@ uint16_t viewportOffsetY = 0;
 
 void generateRoomSegment(int8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNumber, int8_t numRows, int8_t numCols)
 {
-	if(numRows > 0 && numCols > 0) //area fill
-	{
-		while(numRows > 0)
-		{
-			int8_t j = numCols;
-			while(j > 0 )
-			{
-				map[mapInsertRow*32 + mapInsertCol + j] = BackgroundTiles[tileNumber];
-				j --;
-			}
-			numRows--;
-			mapInsertRow++;
-		}
-	}
-
-	else if(numCols > 0)
-	{
-		while(numCols > 0)
-		{
-			map[mapInsertRow*32 + mapInsertCol] = BackgroundTiles[tileNumber];
-			mapInsertCol++;
-		}
-	}
-
-	else if(numRows > 0)
-	{
-		while(numRows > 0)
-		{
-			map[mapInsertRow*32 + mapInsertCol] = BackgroundTiles[tileNumber];
-			mapInsertRow++;
-		}
-	}
+	uint16_t r = mapInsertRow;
+	uint16_t c = mapInsertCol;
 	
-	
+	for(uint16_t i = 0; i < numRows; i++)
+	{
+		if(r >= 31)
+			break;
+		for(int j = 0; j < numCols; j++)
+		{
+			if(c >= 31)
+				break;	
+
+			uint16_t tile = c + (r* mapWidthTiles);
+			uint16_t a = tile;
+			map[tile] = BackgroundTiles[tileNumber];
+			c++;
+		}
+		r++;
+		c = mapInsertCol;
+	}
 }
+
 void generateNewMap()
 {	
 	initrand(DIV_REG); //we should call this after some user input,like after start
@@ -83,18 +70,17 @@ void generateNewMap()
 	
 	uint8_t rOffset = 1;
 	uint8_t cOffset= 1;
-	for(uint8_t i = 0; i < 3; i++) //increase the size if fewer rooms
+	for(uint8_t i = 0; i < 40; i++) //increase the size if fewer rooms
 	{
 		uint8_t nRows = ( rand() % (7 - 5 + 1)) + 5;
 		uint8_t nCols = ( rand() % (7 - 5 + 1)) + 5;
 
 		generateRoomSegment(rOffset, cOffset, 0, nRows, nCols);  
 
-		rOffset += (rand() % (rOffset - 23 +1)) + rOffset;
-		cOffset += (rand() % (cOffset - 23 +1)) + cOffset;
-
-		//rOffset +=( ( rand() % (5 - 0 + 1) ) + 0 ) % 23 ;
-		//cOffset +=( ( rand() % (5 - 0 + 1) ) + 0 ) % 23 ;
+		rOffset +=( ( rand() % (10 - 0 + 1) ) + 0 );
+		cOffset +=( ( rand() % (10 - 0 + 1) ) + 0 );
+		rOffset  =  (rOffset% 30) + 1;
+		cOffset  = (cOffset% 30) + 1;
 	}
 }
 
