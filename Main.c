@@ -16,7 +16,10 @@
 #define room_max_wh 20
 #define room_min_wh 7
 
-/* maps */
+/* Level */
+static uint64_t LEVEL = 1;
+
+/* Maps */
 unsigned char map [1024];
 int16_t mapSeed;
 
@@ -25,16 +28,16 @@ const uint8_t MOVE_FRAME_DELAY = 5;
 const uint8_t ANIM_DELAY = 30;
 const uint8_t SCROLL_AMT = 16;
 
-/* movement and input */
+/* Movement and Input */
 uint16_t playerX=80,playerY=88;
 uint8_t joypadCurrent=0,joypadPrev=0;
 uint8_t moved = 0;
 
-/* animation */
+/* Animation */
 uint8_t current_anim = 0;
 uint16_t anim_timer = 0;
 
-/* scrolling */
+/* Scrolling */
 uint16_t viewportOffsetX = 0;
 uint16_t viewportOffsetY = 0;
 
@@ -62,23 +65,41 @@ void generateRoomSegment(int8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNu
 	}
 }
 
+void bridgeRooms(uint8_t* roomsX, uint8_t* roomsY)
+{
+
+}
+/* 
+* TO DO: pass in the room size here based on level. Generate rooms with calculated variable sizes from the notes section. 
+* With the ranges, need to set up a data structure to store and get them quickly.
+* Track the overlap of rooms to determine how many we have, also written in notes section.
+*/
 void generateNewMap()
 {	
 	initrand(DIV_REG); //we should call this after some user input,like after start
 	memcpy(&map[0],&defaultMap[0],1024);
-	//generate the rooms
-	
+
+	////setup room tracking////
+	// const uint8_t maxRooms = ( (defaultMapWidth * defaultMapHeight) * 2) / ( (7 + 1) * (7 + 1) ); 
+	// int* roomsX = (int*)malloc(maxRooms* sizeof(uint8_t));
+	// int* roomsY = (int*)malloc(maxRooms* sizeof(uint8_t));
+
+	////actually generating the tiles////
 	uint8_t rOffset = 1;
 	uint8_t cOffset= 1;
-	for(uint8_t i = 0; i < 40; i++) //increase the size if fewer rooms
+	for(uint8_t i = 0; i < 30; i++) //increase the size if fewer rooms
 	{
+		//pick random number of rows and columns to make the room with
 		uint8_t nRows = ( rand() % (7 - 5 + 1)) + 5;
 		uint8_t nCols = ( rand() % (7 - 5 + 1)) + 5;
 
-		generateRoomSegment(rOffset, cOffset, 0, nRows, nCols);  
+		generateRoomSegment(rOffset, cOffset, 0, nRows, nCols); 
+		//record where our just drawn room ended, so we can get a map of our rooms
+		 
 
-		rOffset +=( ( rand() % (10 - 0 + 1) ) + 0 );
-		cOffset +=( ( rand() % (10 - 0 + 1) ) + 0 );
+		//add a random offset and prevent rooms being drawn at the edge
+		rOffset +=( ( rand() % (10 - (-5) + 1) ) -5 );
+		cOffset +=( ( rand() % (10 - (-5) + 1) ) -5 );
 		rOffset  =  (rOffset% 30) + 1;
 		cOffset  = (cOffset% 30) + 1;
 	}
