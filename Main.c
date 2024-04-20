@@ -8,32 +8,26 @@
 #include "rand.h"
 
 #define tile_size 8
-#define mapWidthTiles 32
-#define mapHeightTiles 32
-#define mapWHPixels 256
-#define testmapBank 0
-#define no_maps 3
 #define room_max_wh 20
 #define room_min_wh 7
 
 /* Level */
 static uint64_t LEVEL = 1;
 
-/* Maps */
+/* Maps (generated) */
 unsigned char map [1024];
+unsigned char map2[1024];
 int16_t mapSeed;
 
-
-const uint8_t MOVE_FRAME_DELAY = 5;
-const uint8_t ANIM_DELAY = 30;
-const uint8_t SCROLL_AMT = 16;
-
 /* Movement and Input */
-uint16_t playerX=80,playerY=88;
+const uint8_t MOVE_FRAME_DELAY = 5;
+uint16_t playerX=8,playerY=16;
 uint8_t joypadCurrent=0,joypadPrev=0;
 uint8_t moved = 0;
 
 /* Animation */
+const uint8_t ANIM_DELAY = 30;
+const uint8_t SCROLL_AMT = 24;
 uint8_t current_anim = 0;
 uint16_t anim_timer = 0;
 
@@ -41,23 +35,23 @@ uint16_t anim_timer = 0;
 uint16_t viewportOffsetX = 0;
 uint16_t viewportOffsetY = 0;
 
-void generateRoomSegment(int8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNumber, int8_t numRows, int8_t numCols)
+void generateRoomSegment(unsigned char mapArr[], uint8_t mapInsertRow, int8_t mapInsertCol, int8_t tileNumber, int8_t numRows, int8_t numCols)
 {
 	uint16_t r = mapInsertRow;
 	uint16_t c = mapInsertCol;
 	
 	for(uint16_t i = 0; i < numRows; i++)
 	{
-		if(r >= 31)
+		if(r >= (defaultMapHeight -1) )
 			break;
 		for(int j = 0; j < numCols; j++)
 		{
-			if(c >= 31)
+			if(c >= (defaultMapWidth -1) )
 				break;	
 
-			uint16_t tile = c + (r* mapWidthTiles);
+			uint16_t tile = c + (r* defaultMapWidth);
 			uint16_t a = tile;
-			map[tile] = BackgroundTiles[tileNumber];
+			mapArr[tile] = BackgroundTiles[tileNumber];
 			c++;
 		}
 		r++;
@@ -74,10 +68,9 @@ void bridgeRooms(uint8_t* roomsX, uint8_t* roomsY)
 * With the ranges, need to set up a data structure to store and get them quickly.
 * Track the overlap of rooms to determine how many we have, also written in notes section.
 */
-void generateNewMap()
+void generateNewMap(unsigned char mapArr[], int64_t level)
 {	
-	initrand(DIV_REG); //we should call this after some user input,like after start
-	memcpy(&map[0],&defaultMap[0],1024);
+	memcpy(&mapArr[0], &defaultMap[0],sizeof(map));
 
 	////setup room tracking////
 	// const uint8_t maxRooms = ( (defaultMapWidth * defaultMapHeight) * 2) / ( (7 + 1) * (7 + 1) ); 
@@ -87,20 +80,20 @@ void generateNewMap()
 	////actually generating the tiles////
 	uint8_t rOffset = 1;
 	uint8_t cOffset= 1;
-	for(uint8_t i = 0; i < 30; i++) //increase the size if fewer rooms
+	for(uint8_t i = 0; i < 40; i++) //increase the size if fewer rooms
 	{
 		//pick random number of rows and columns to make the room with
 		uint8_t nRows = ( rand() % (7 - 5 + 1)) + 5;
 		uint8_t nCols = ( rand() % (7 - 5 + 1)) + 5;
 
-		generateRoomSegment(rOffset, cOffset, 0, nRows, nCols); 
+		generateRoomSegment(mapArr, rOffset, cOffset, 0, nRows, nCols); 
 		//record where our just drawn room ended, so we can get a map of our rooms
 		 
 
 		//add a random offset and prevent rooms being drawn at the edge
 		rOffset +=( ( rand() % (10 - (-5) + 1) ) -5 );
 		cOffset +=( ( rand() % (10 - (-5) + 1) ) -5 );
-		rOffset  =  (rOffset% 30) + 1;
+		rOffset  = (rOffset% 30) + 1;
 		cOffset  = (cOffset% 30) + 1;
 	}
 }
@@ -117,6 +110,7 @@ uint16_t getPlayerY()
 	return plY;
 }
 
+//need bugfix
 void check_bkg_scroll()
 {
 	if(getPlayerX() > SCREENWIDTH)
@@ -156,8 +150,9 @@ uint8_t isValidTile(uint16_t x, uint16_t y)
 {
 	uint8_t column = ((x-8) + viewportOffsetX)/tile_size;
 	uint8_t row = ((y-16) + viewportOffsetY)/tile_size;
-	uint16_t tilemapIdx = column +( row * mapWidthTiles);
-	return map[tilemapIdx]< 1;
+	uint16_t tilemapIdx = column +( row * defaultMapWidth);
+	//return map[tilemapIdx]< 1;
+	return 1;
 }
 
 void update_animations()
@@ -173,13 +168,16 @@ int main()
 	SHOW_SPRITES;
 	SPRITES_8x8;
 	DISPLAY_ON; 
+	initrand(DIV_REG); //we should call this after some user input,like after start
 
 	uint8_t frames = MOVE_FRAME_DELAY;
-	
 	set_bkg_data(0,tileData_NUM_TILES,TileData);
 	set_sprite_data(0,7,character);
-	generateNewMap();
-	set_bkg_tiles(0,0,defaultMapWidth,defaultMapHeight,map);
+	generateNewMap(map, LEVEL);
+	generateNewMap(map2, LEVEL);
+
+	set_bkg_tiles(0,0,defaultMapWidth,defaultMapHeight,map2);
+	
 	
 	while(1)
 	{
@@ -220,7 +218,7 @@ int main()
 			{
 				if(isValidTile((getPlayerX()+8), getPlayerY()))
 				{
-					if(getPlayerX() + viewportOffsetX < mapWidthTiles * 8)
+					if(getPlayerX() + viewportOffsetX < (defaultMapWidth *2) * 8) 
 					{
 						playerX +=8;
 						current_anim = 2;
@@ -250,7 +248,7 @@ int main()
 			{
 				if(isValidTile(getPlayerX(),getPlayerY()+8))
 				{
-					if(getPlayerY() + viewportOffsetY < mapWHPixels)
+					if(getPlayerY() + viewportOffsetY < defaultMapHeight * 8)
 					{
 						playerY +=8;
 						current_anim = 4;
